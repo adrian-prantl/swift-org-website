@@ -125,4 +125,4 @@ With these changes for **explicitly-built modules**:
 - **Developers maintaining their own build systems** can remove support for `-modulewrap` actions and remove `-add_ast_path` from the linker flags, but may need to pass `-debug-module-path` to the compiler if they are not letting the Swift driver handle the frontend options
 - Finally, many projects forgot to use `-add_ast_path` when linking static archives into their projects and had mysterious debugging problems inside the static archives as a result. This entire class of problems has been designed away.
 
-*tl;dr:* `-modulewrap` and `-add_ast_path` are replaced by `-debug-module-path`. Debug info gets smaller and more precise!
+*tl;dr:* `-modulewrap` and `-add_ast_path` are replaced by `-debug-module-path`. Debug info gets smaller and more precise.

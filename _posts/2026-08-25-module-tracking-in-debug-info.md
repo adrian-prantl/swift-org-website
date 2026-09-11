@@ -1,14 +1,16 @@
 ---
 layout: new-layouts/post
-published: false
-date: 2026-09-08 13:30
+published: true
+date: 2026-09-11 11:30
 title: "Module Tracking in Swift Debug Info"
 author: [adrianprantl]
 category: "Developer Tools"
 ---
 
 When your Swift program hits a breakpoint and stops so you can inspect it, the debugger's expression evaluator has to find the exact Swift module your code was built from. Until now, that lookup wasn't always precise. The upcoming Swift 6.4 release will include changes, begun in Swift 6.3, that address this by updating how the Swift compiler references explicitly-built Swift modules in debug info.
+
 The majority of developers will automatically benefit from **faster**, more **reliable debugging** and **smaller build products**, without any modifications to their SwiftPM or Xcode projects.
+
 For developers who **maintain their own build systems** using, for example, Bazel, Buck, or CMake, **some adjustments may be necessary** to take advantage of these changes.
 
 This article explains how Swift modules are used by the debugger, and how they are related to debugging. Next, it explains how Swift 6.3+ changes how modules are tracked in debug info to solve several problems with the previous representation. Finally, it shows how to adjust build systems to make use of the new representation, and eliminate some build steps that are no longer necessary.
@@ -86,7 +88,8 @@ This can create scalability issues, especially for large applications:
 ## Precise module tracking
 
 To evaluate expressions, the debugger needs to be able to find and import Swift modules. Until now, this relied either on special linker support or additional compilation steps, with a high cost for binary size. On top of that the debugger was imprecisely locating Swift modules by name.
-Over the last couple of months we have been making changes to the Swift compiler, the Swift driver, and LLDB that improve performance, reliability, and scalability. These changes were enabled by and are built on top of explicitly-built modules.
+
+Starting in Swift 6.3 and continuing since, we have been making changes to the Swift compiler, the Swift driver, and LLDB that improve performance, reliability, and scalability. These changes are built on top of explicitly-built modules.
 
 ### What's new
 
@@ -101,13 +104,13 @@ Over the last couple of months we have been making changes to the Swift compiler
 
 * __Binary Swift modules in dSYM bundles:__ As a consequence, `dsymutil` will no longer process binary Swift modules. This is a good thing, because binary Swift modules—which can only be parsed by the exact toolchain that produced them—were always at odds with dSYM bundles being a long-term archival format. Moreover, Swift modules often depend on Clang modules, and these Clang modules also were never included in dSYM bundles. By removing the binary Swift modules, dSYM bundles will get smaller.
 
-* __But don’t we need them for debugging?__ Since Swift 1.0, binary Swift modules were included in dSYM bundles because they were needed to resolve the types of local variables. However, starting with Swift 5.6, LLDB could perform this operation by reading the reflection metadata in the binary. The absence of binary Swift modules in dSYM bundles does not affect LLDB’s ability to inspect the contents of variables or dump object descriptions with `po`. Binary Swift modules are still needed to evaluate complex expressions like function calls or computed getters. Expression evaluation continues to work as long as LLDB finds all binary modules in their original (or [remapped](https://lldb.llvm.org/use/map.html#remap-source-file-pathnames-for-the-debug-session)) location. This is always the case when debugging a just-built binary on the same machine.
-If the absence of binary Swift modules in dSYM bundles creates an unforeseen problem with your workflow, please let us know, either on the [Swift LLDB forum](https://forums.swift.org/c/development/lldb/13) or by creating an issue on the [bug tracker](https://github.com/swiftlang/swift/issues)!
+   * _But don’t we need them for debugging?_ Since Swift 1.0, binary Swift modules were included in dSYM bundles because they were needed to resolve the types of local variables. However, starting with Swift 5.6, LLDB could perform this operation by reading the reflection metadata in the binary. The absence of binary Swift modules in dSYM bundles does not affect LLDB’s ability to inspect the contents of variables or dump object descriptions with `po`. Binary Swift modules are still needed to evaluate complex expressions like function calls or computed getters. Expression evaluation continues to work as long as LLDB finds all binary modules in their original (or [remapped](https://lldb.llvm.org/use/map.html#remap-source-file-pathnames-for-the-debug-session)) location. This is always the case when debugging a just-built binary on the same machine. If the absence of binary Swift modules in dSYM bundles creates an unforeseen problem with your workflow, please let us know, either on the [Swift LLDB forum](https://forums.swift.org/c/development/lldb/13) or by creating an issue on the [bug tracker](https://github.com/swiftlang/swift/issues).
 
 When compiling with caching enabled, all paths pointing to Swift modules and module debug info are content-addressable storage references, identified by content rather than file location, so everything described here also works transparently with compilation caching.
 
 ### Coming in Swift 6.4: Faster bridging header import in LLDB
 Beyond more reliable path tracking, Swift 6.4 will also speed up importing bridging headers, a step common enough across Swift projects that most developers will feel the difference.
+
 Up to and including Swift 6.3, LLDB always compiles a bridging header from source, a step that can add noticeable time to debugging sessions that use one. In recent nightly development toolchains, LLDB can use the new precise explicit module information to import precompiled bridging headers and their explicit module dependencies directly. This makes debugging explicitly-built projects with bridging headers as fast and reliable as debugging fully modularized projects.
 
 ## Summary

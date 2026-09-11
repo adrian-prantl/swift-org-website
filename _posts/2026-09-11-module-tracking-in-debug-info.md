@@ -13,7 +13,7 @@ The majority of developers will automatically benefit from **faster**, more **re
 
 For developers who **maintain their own build systems** using, for example, Bazel, Buck, or CMake, **some adjustments may be necessary** to take advantage of these changes.
 
-This article explains how Swift modules are used by the debugger, and how they are related to debugging. Next, it explains how Swift 6.3+ changes how modules are tracked in debug info to solve several problems with the previous representation. Finally, it shows how to adjust build systems to make use of the new representation, and eliminate some build steps that are no longer necessary.
+This article explains how the debugger uses Swift modules. Next, it describes how Swift 6.3 changes the way modules are tracked in debug info to solve several problems with the previous representation. Finally, it shows how to adjust build systems to take advantage of the new representation and eliminate some build steps that are no longer necessary.
 
 ## Swift modules and expression evaluation
 
@@ -100,6 +100,9 @@ Starting in Swift 6.3 and continuing since, we have been making changes to the S
 * __Swift driver passes module path to compile jobs:__ Users of `swiftpm` or Xcode do not need to think about this, because the Swift driver also knows about the new `-debug-module-path` option and automatically passes the path to the object file's own Swift module to the compiler. However, users maintaining their own third-party build system to orchestrate Swift compilations with explicitly-built modules that are calling the Swift frontend directly and bypassing the Swift driver need to make sure to communicate the path to the top-level module to each object file compilation job.
 
 ### What's deprecated
+
+_Beginning in Swift 6.4, you can safely make the following changes._
+
 * __`swiftc -modulewrap` and `ld -add_ast_path`:__ Because the module paths are now communicated via debug info and the module headers themselves, third-party build systems doing explicit module builds can now remove all `-modulewrap` actions on Linux and Windows; and remove the use of the `-add_ast_path` linker option on Darwin (macOS, iOS, *etc…*).
 
 * __Binary Swift modules in dSYM bundles:__ As a consequence, `dsymutil` will no longer process binary Swift modules. This is a good thing, because binary Swift modules—which can only be parsed by the exact toolchain that produced them—were always at odds with dSYM bundles being a long-term archival format. Moreover, Swift modules often depend on Clang modules, and these Clang modules also were never included in dSYM bundles. By removing the binary Swift modules, dSYM bundles will get smaller.

@@ -83,7 +83,7 @@ This can create scalability issues, especially for large applications:
 - Module files can get large and for an entire application you can often end up with a large portion of the SDK in the resulting binary. That can be quite problematic for the binary size.
 - As mentioned above, the chances of LLDB finding the right module in a Swift AST section or symbol table just by its base name diminish as the application gets more complex.
 - Binary Swift modules are version-locked to the precise compiler that created them. This is at odds with the intent of dSYM bundles, which are meant for long-term archival serialization of debug info.
-- When anything goes wrong and a matching explicit module cannot be found LLDB falls back to an implicit module import which may involve recompiling parts of the SDK from source. This can be very slow.
+- If a matching explicit module cannot be found, LLDB falls back to an implicit module import which may involve recompiling parts of the SDK from source. This can be very slow.
 
 ## Precise module tracking
 
